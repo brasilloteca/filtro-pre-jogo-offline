@@ -1,0 +1,1 @@
+# filtro-pre-jogo-offline
