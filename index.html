@@ -152,9 +152,15 @@
   }
 
   // Ativa o Service Worker
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('service-worker.js');
+  <script>
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", () => {
+      navigator.serviceWorker
+        .register("service-worker.js")
+        .then(() => console.log("✅ Service Worker registrado com sucesso"))
+        .catch(err => console.log("❌ Falha ao registrar o Service Worker:", err));
+    });
   }
-  </script>
+</script>
 </body>
 </html>
