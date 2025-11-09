@@ -1,38 +1,39 @@
-const CACHE_NAME = "filtro-pre-jogo-offline";
-const urlsToCache = [
+const CACHE_NAME = "filtro-pre-jogo-v1";
+const URLS_TO_CACHE = [
   "./",
   "./index.html",
   "./manifest.json"
 ];
 
-self.addEventListener("install", event => {
+// Instala e faz cache inicial
+self.addEventListener("install", (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then(cache => cache.addAll(urlsToCache))
+    caches.open(CACHE_NAME)
+      .then((cache) => cache.addAll(URLS_TO_CACHE))
+      .then(() => self.skipWaiting())
   );
 });
 
-self.addEventListener("activate", event => {
+// Ativa e limpa caches antigos
+self.addEventListener("activate", (event) => {
   event.waitUntil(
-    caches.keys().then(keys => 
-      Promise.all(keys.map(key => key !== CACHE_NAME && caches.delete(key)))
-    )
-  );
-});
-
-self.addEventListener("fetch", event => {
-  event.respondWith(
-    caches.match(event.request).then(response => {
-      return (
-        response ||
-        fetch(event.request)
-          .then(res => {
-            return caches.open(CACHE_NAME).then(cache => {
-              cache.put(event.request, res.clone());
-              return res;
-            });
-          })
-          .catch(() => caches.match("./index.html"))
+    caches.keys().then((cacheNames) => {
+      return Promise.all(
+        cacheNames
+          .filter((name) => name !== CACHE_NAME)
+          .map((name) => caches.delete(name))
       );
     })
+  );
+  self.clients.claim();
+});
+
+// Intercepta requisições e serve do cache se offline
+self.addEventListener("fetch", (event) => {
+  event.respondWith(
+    caches.match(event.request)
+      .then((response) => {
+        return response || fetch(event.request);
+      })
   );
 });
