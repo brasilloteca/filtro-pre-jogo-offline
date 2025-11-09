@@ -1,39 +1,54 @@
-const CACHE_NAME = "filtro-pre-jogo-v1";
-const URLS_TO_CACHE = [
+const CACHE_NAME = "filtro-pre-jogo-cache-v3";
+const FILES_TO_CACHE = [
   "./",
   "./index.html",
-  "./manifest.json"
+  "./manifest.json",
+  "./1762641416087.jpg",
+  "./1762641459534.jpg"
 ];
 
-// Instala e faz cache inicial
+// Instala o service worker e faz o cache inicial
 self.addEventListener("install", (event) => {
+  console.log("📦 Instalando Service Worker e salvando arquivos no cache...");
   event.waitUntil(
     caches.open(CACHE_NAME)
-      .then((cache) => cache.addAll(URLS_TO_CACHE))
+      .then((cache) => cache.addAll(FILES_TO_CACHE))
       .then(() => self.skipWaiting())
   );
 });
 
-// Ativa e limpa caches antigos
+// Ativa o novo cache e remove versões antigas
 self.addEventListener("activate", (event) => {
+  console.log("✅ Ativando novo Service Worker...");
   event.waitUntil(
-    caches.keys().then((cacheNames) => {
+    caches.keys().then((keyList) => {
       return Promise.all(
-        cacheNames
-          .filter((name) => name !== CACHE_NAME)
-          .map((name) => caches.delete(name))
+        keyList.map((key) => {
+          if (key !== CACHE_NAME) {
+            console.log("🧹 Removendo cache antigo:", key);
+            return caches.delete(key);
+          }
+        })
       );
     })
   );
   self.clients.claim();
 });
 
-// Intercepta requisições e serve do cache se offline
+// Intercepta requisições e serve do cache quando offline
 self.addEventListener("fetch", (event) => {
   event.respondWith(
     caches.match(event.request)
       .then((response) => {
-        return response || fetch(event.request);
+        return response || fetch(event.request)
+          .then((liveResponse) => {
+            // Armazena respostas novas no cache
+            return caches.open(CACHE_NAME).then((cache) => {
+              cache.put(event.request, liveResponse.clone());
+              return liveResponse;
+            });
+          })
+          .catch(() => caches.match("./index.html"));
       })
   );
 });
