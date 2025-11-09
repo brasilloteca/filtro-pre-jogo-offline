@@ -1,4 +1,4 @@
-const CACHE_NAME = "filtro-pre-jogo-v1";
+const CACHE_NAME = "filtro-pre-jogo-offline";
 const urlsToCache = [
   "./",
   "./index.html",
